@@ -6,7 +6,7 @@ ValueArray::ValueArray()
 {
 }
 
-void ValueArray::write_value_array(Value value)
+void ValueArray::writeValue(Value value)
 {
     values.push_back(value);
 }

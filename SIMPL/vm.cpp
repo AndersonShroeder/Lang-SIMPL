@@ -16,6 +16,10 @@ Adding a sequence of instructions gives the total effect on the stack:
 - Statement: zero because a statement does not push any values onto the stack after execution
 */
 
+VM::VM()
+{
+    resetStack();
+}
 
 void VM::resetStack()
 {
@@ -223,10 +227,9 @@ InterpretResult VM::run()
 
 InterpretResult VM::interpret(const char *source)
 {
-    using namespace compileTools;
     // Chunk to be filled from user input
     ByteArray fill;
-    Compiler compiler = Compiler(source);
+    compiler = Compiler(source);
 
     // If compilation fails, return result
     if (!compiler.compile(&fill))

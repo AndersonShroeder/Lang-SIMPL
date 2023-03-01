@@ -8,9 +8,6 @@
 #include "debug.hh"
 #endif
 
-using namespace compileTools;
-using namespace parseTools;
-
 ByteArray *Compiler::currentChunk()
 {
     return compilingChunk;
@@ -19,6 +16,50 @@ ByteArray *Compiler::currentChunk()
 //////////////////////////////////////////////////
 // PARSER
 //////////////////////////////////////////////////
+
+void Parser::generateRules()
+{
+    rules[T_LPAREN] = {Compiler::grouping, NULL, P_NONE};
+    rules[T_RPAREN] = {NULL, NULL, P_NONE};
+    rules[T_LBRACE] = {NULL, NULL, P_NONE};
+    rules[T_RBRACE] = {NULL, NULL, P_NONE};
+    rules[T_COMMA] = {NULL, NULL, P_NONE};
+    rules[T_DOT] = {NULL, NULL, P_NONE};
+    rules[T_MINUS] = {Compiler::unary, Compiler::binary, P_TERM};
+    rules[T_PLUS] = {NULL, Compiler::binary, P_TERM};
+    rules[T_SEMICOLON] = {NULL, NULL, P_NONE};
+    rules[T_SLASH] = {NULL, Compiler::binary, P_FACTOR};
+    rules[T_STAR] = {NULL, Compiler::binary, P_FACTOR};
+    rules[T_NOT] = {Compiler::unary, NULL, P_NONE};
+    rules[T_DNOTE] = {NULL, Compiler::binary, P_EQUALITY};
+    rules[T_EQ] = {NULL, NULL, P_NONE};
+    rules[T_EQUIV] = {NULL, Compiler::binary, P_EQUALITY};
+    rules[T_GRT] = {NULL, Compiler::binary, P_COMPARISON};
+    rules[T_GRTEQ] = {NULL, Compiler::binary, P_COMPARISON};
+    rules[T_LSS] = {NULL, Compiler::binary, P_COMPARISON};
+    rules[T_LSSEQ] = {NULL, Compiler::binary, P_COMPARISON};
+    rules[T_ID] = {Compiler::variable, NULL, P_NONE};
+    rules[T_STR] = {Compiler::string, NULL, P_NONE};
+    rules[T_NUM] = {Compiler::number, NULL, P_NONE};
+    rules[T_AND] = {NULL, NULL, P_NONE};
+    rules[T_CLASS] = {NULL, NULL, P_NONE};
+    rules[T_ELSE] = {NULL, NULL, P_NONE};
+    rules[T_FALSE] = {Compiler::literal, NULL, P_NONE};
+    rules[T_FOR] = {NULL, NULL, P_NONE};
+    rules[T_FUN] = {NULL, NULL, P_NONE};
+    rules[T_IF] = {NULL, NULL, P_NONE};
+    rules[T_NIL] = {Compiler::literal, NULL, P_NONE};
+    rules[T_OR] = {NULL, NULL, P_NONE};
+    rules[T_PRINT] = {NULL, NULL, P_NONE};
+    rules[T_RETURN] = {NULL, NULL, P_NONE};
+    rules[T_SUPER] = {NULL, NULL, P_NONE};
+    rules[T_THIS] = {NULL, NULL, P_NONE};
+    rules[T_TRUE] = {Compiler::literal, NULL, P_NONE};
+    rules[T_VAR] = {NULL, NULL, P_NONE};
+    rules[T_WHILE] = {NULL, NULL, P_NONE};
+    rules[T_ERROR] = {NULL, NULL, P_NONE};
+    rules[T_EOF] = {NULL, NULL, P_NONE};
+}
 
 // Prints where error occured
 void Parser::errorAt(Token token, const char *message)
@@ -99,15 +140,15 @@ bool Parser::match(TokenType type)
 }
 
 
-ParseRule *Compiler::Compiler::getRule(TokenType type)
+ParseRule *Compiler::getRule(TokenType type)
 {
-    return &rules[type];
+    return &parser.rules[type];
 }
 
-void Parser::parsePrecedence(Precedence precedence)
+void Parser::parsePrecedence(Precedence precedence, Compiler* compiler)
 {
     advance();
-    ParseFn prefixRule = Compiler::Compiler::getRule(previous.type)->prefix;
+    ParseFn prefixRule = compiler->getRule(previous.type)->prefix;
     if (prefixRule == NULL)
     {
         error("Expect expression.");
@@ -115,13 +156,13 @@ void Parser::parsePrecedence(Precedence precedence)
     }
 
     bool canAssign = precedence <= P_ASSIGNMENT;
-    prefixRule(canAssign);
+    (compiler->*prefixRule)(canAssign);
 
-    while (precedence <= Compiler::getRule(current.type)->precedence)
+    while (precedence <= compiler->getRule(current.type)->precedence)
     {
         advance();
-        ParseFn infixRule = Compiler::getRule(previous.type)->infix;
-        infixRule(canAssign);
+        ParseFn infixRule = compiler->getRule(previous.type)->infix;
+        (compiler->*infixRule)(canAssign);
     }
 
     if (canAssign && match(T_EQ))
@@ -183,7 +224,7 @@ void Compiler::binary(bool canAssign)
 {
     TokenType operatorType = parser.previous.type;
     ParseRule *rule = Compiler::getRule(operatorType);
-    parser.parsePrecedence((Precedence)(rule->precedence + 1));
+    parser.parsePrecedence((Precedence)(rule->precedence + 1), this);
 
     switch (operatorType)
     {
@@ -285,7 +326,7 @@ void Compiler::unary(bool canAssign)
     TokenType operatorType = parser.previous.type;
 
     // compile operand
-    parser.parsePrecedence(P_UNARY);
+    parser.parsePrecedence(P_UNARY, this);
 
     switch (operatorType)
     {
@@ -321,7 +362,7 @@ void Compiler::unary(bool canAssign)
 
 void Compiler::expression()
 {
-    parser.parsePrecedence(P_ASSIGNMENT);
+    parser.parsePrecedence(P_ASSIGNMENT, this);
 }
 
 // void Compiler::varDeclaration()

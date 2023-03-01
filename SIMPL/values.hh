@@ -51,7 +51,7 @@ public:
 
     ValueArray();
 
-    void write_value_array(Value value);
+    void writeValue(Value value);
 
     int size();
 };

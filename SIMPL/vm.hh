@@ -19,6 +19,7 @@ enum InterpretResult
 class VM
 {
 public:
+    Compiler compiler;
     ByteArray *bytearray;
     std::vector<uint8_t>::iterator ip; // Instruction pointer which points to the current chunk being run
     Value stack[STACK_MAX];
@@ -27,7 +28,7 @@ public:
     // Table<ObjString, Value> globals;
     Obj* objects;
 
-    VM(){};
+    VM();
 
     void resetStack();
 
