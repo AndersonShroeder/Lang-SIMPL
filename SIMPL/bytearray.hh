@@ -1,8 +1,8 @@
 #ifndef BYTE_ARRAY_H
 #define BYTE_ARRAY_H
 
-#include "../common.hh"
-#include "../values.hh"
+#include "common.hh"
+#include "values.hh"
 
 class ByteArray
 {
@@ -10,6 +10,8 @@ class ByteArray
     ValueArray constants;
     std::vector<int> lines;
     std::vector<uint8_t> bytes;
+
+    ByteArray(){}
 
     void writeByte(uint8_t byte, int line);
 

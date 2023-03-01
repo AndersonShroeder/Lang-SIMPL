@@ -1,11 +1,11 @@
 #include "compiler.hh"
 #include "lexer.hh"
-#include "../vm/vm.hh"
-#include "../object.hh"
-#include "../bytearray/bytecodes.hh"
+#include "vm.hh"
+#include "object.hh"
+#include "bytecodes.hh"
 
 #ifdef DEBUG_PRINT_CODE
-#include "../debugger/debug.hh"
+#include "debug.hh"
 #endif
 
 using namespace compileTools;
@@ -21,7 +21,7 @@ ByteArray *Compiler::currentChunk()
 //////////////////////////////////////////////////
 
 // Prints where error occured
-void Parser::errorAt(Token *token, const char *message)
+void Parser::errorAt(Token token, const char *message)
 {
     // If we have seen a previous error we ignore future errors when compile
     if (panicMode)
@@ -29,20 +29,20 @@ void Parser::errorAt(Token *token, const char *message)
 
     panicMode = true;
 
-    fprintf(stderr, "[line %d] Error", token->line);
+    fprintf(stderr, "[line %d] Error", token.line);
 
-    if (token->type == T_EOF)
+    if (token.type == T_EOF)
     {
         fprintf(stderr, " at end");
     }
 
-    else if (token->type == T_ERROR)
+    else if (token.type == T_ERROR)
     {
     }
 
     else
     {
-        fprintf(stderr, " at '%.*s'", token->length, token->start);
+        fprintf(stderr, " at '%.*s'", token.length, token.start);
     }
 
     fprintf(stderr, ": %s\n", message);
@@ -65,16 +65,16 @@ void Parser::advance()
 
     for (;;)
     {
-        current = &(lexer.scanToken());
-        if (current->type != T_ERROR)
+        current = lexer.scanToken();
+        if (current.type != T_ERROR)
             break;
-        errorAtCurrent(current->start);
+        errorAtCurrent(current.start);
     }
 }
 
 void Parser::consume(TokenType type, const char *message)
 {
-    if (current->type == type)
+    if (current.type == type)
     {
         advance();
         return;
@@ -85,7 +85,7 @@ void Parser::consume(TokenType type, const char *message)
 
 bool Parser::check(TokenType type)
 {
-    return current->type == type;
+    return current.type == type;
 }
 
 // If a token has type consume the token and move on, otherwise leave it
@@ -98,10 +98,16 @@ bool Parser::match(TokenType type)
     return true;
 }
 
+
+ParseRule *Compiler::Compiler::getRule(TokenType type)
+{
+    return &rules[type];
+}
+
 void Parser::parsePrecedence(Precedence precedence)
 {
     advance();
-    ParseFn prefixRule = getRule(previous->type)->prefix;
+    ParseFn prefixRule = Compiler::Compiler::getRule(previous.type)->prefix;
     if (prefixRule == NULL)
     {
         error("Expect expression.");
@@ -111,10 +117,10 @@ void Parser::parsePrecedence(Precedence precedence)
     bool canAssign = precedence <= P_ASSIGNMENT;
     prefixRule(canAssign);
 
-    while (precedence <= getRule(current->type)->precedence)
+    while (precedence <= Compiler::getRule(current.type)->precedence)
     {
         advance();
-        ParseFn infixRule = getRule(previous->type)->infix;
+        ParseFn infixRule = Compiler::getRule(previous.type)->infix;
         infixRule(canAssign);
     }
 
@@ -130,7 +136,7 @@ void Parser::parsePrecedence(Precedence precedence)
 
 void Compiler::emitByte(uint8_t byte)
 {
-    currentChunk()->writeByte(byte, parser.previous->line);
+    currentChunk()->writeByte(byte, parser.previous.line);
 }
 
 void Compiler::emitBytes(uint8_t byte1, uint8_t byte2)
@@ -165,7 +171,7 @@ void Compiler::endCompiler()
 {
     emitReturn();
 #ifdef DEBUG_PRINT_CODE
-    if (!parser.hhadError)
+    if (!parser.hadError)
     {
         Disassembler debug = Disassembler(currentChunk(), "Code");
         debug.disassembleByteArray();
@@ -175,8 +181,8 @@ void Compiler::endCompiler()
 
 void Compiler::binary(bool canAssign)
 {
-    TokenType operatorType = parser.previous->type;
-    ParseRule *rule = parser.getRule(operatorType);
+    TokenType operatorType = parser.previous.type;
+    ParseRule *rule = Compiler::getRule(operatorType);
     parser.parsePrecedence((Precedence)(rule->precedence + 1));
 
     switch (operatorType)
@@ -219,7 +225,7 @@ void Compiler::binary(bool canAssign)
 
 void Compiler::literal(bool canAssign)
 {
-    switch (parser.previous->type)
+    switch (parser.previous.type)
     {
     case T_FALSE:
         emitByte(OP_FALSE);
@@ -244,39 +250,39 @@ void Compiler::grouping(bool canAssign)
 
 void Compiler::number(bool canAssign)
 {
-    double value = strtod(parser.previous->start, NULL);
+    double value = strtod(parser.previous.start, NULL);
     emitConstant(NUMBER_VAL(value));
 }
 
-// Creates a string object and wraps it in Value then adds to constant table
+// // Creates a string object and wraps it in Value then adds to constant table
 void Compiler::string(bool canAssign)
 {
-    // +1 and -2 trim the leading and ending qoutation marks
-    emitConstant(OBJ_VAL(copyString(parser.previous.start + 1, parser.previous.length - 2)));
+    // // +1 and -2 trim the leading and ending qoutation marks
+    // emitConstant(OBJ_VAL(copyString(parser.previous.start + 1, parser.previous.length - 2)));
 }
 
-void Compiler::namedVariable(Token *name, bool canAssign)
+void Compiler::namedVariable(Token name, bool canAssign)
 {
-    uint8_t arg = identifierConstant(name);
+    // uint8_t arg = identifierConstant(name);
 
-    if (canAssign && parser.match(T_EQ))
-    {
-        expression();
-        emitBytes(OP_SET_GLOBAL, arg);
-    }
-    else
-        emitBytes(OP_GET_GLOBAL, arg);
+    // if (canAssign && parser.match(T_EQ))
+    // {
+    //     expression();
+    //     emitBytes(OP_SET_GLOBAL, arg);
+    // }
+    // else
+    //     emitBytes(OP_GET_GLOBAL, arg);
 }
 
 void Compiler::variable(bool canAssign)
 {
-    namedVariable(parser.previous, canAssign);
+    // namedVariable(parser.previous, canAssign);
 }
 
 // Unary Negation
 void Compiler::unary(bool canAssign)
 {
-    TokenType operatorType = parser.previous->type;
+    TokenType operatorType = parser.previous.type;
 
     // compile operand
     parser.parsePrecedence(P_UNARY);
@@ -296,46 +302,42 @@ void Compiler::unary(bool canAssign)
 
 // returns index of variable name as a string in chunk -> a string name is too big for
 // byte code stream which is why we access using the index of type uint8_t
-uint8_t Compiler::identifierConstant(Token *name)
-{
-    return makeConstant(OBJ_VAL(copyString(name->start, name->length)));
-}
+// uint8_t Compiler::identifierConstant(Token name)
+// {
+//     return makeConstant(OBJ_VAL(copyString(name.start, name.length)));
+// }
 
-uint8_t Compiler::parseVariable(const char *errorMessage)
-{
-    parser.consume(T_ID, errorMessage);
-    return identifierConstant(parser.previous);
-}
+// uint8_t Compiler::parseVariable(const char *errorMessage)
+// {
+//     parser.consume(T_ID, errorMessage);
+//     return identifierConstant(parser.previous);
+// }
 
-void Compiler::defineVariable(uint8_t global)
-{
-    emitBytes(OP_DEFINE_GLOBAL, global);
-}
+// void Compiler::defineVariable(uint8_t global)
+// {
+//     emitBytes(OP_DEFINE_GLOBAL, global);
+// }
 
-ParseRule *Compiler::getRule(TokenType type)
-{
-    return &rules[type];
-}
 
 void Compiler::expression()
 {
     parser.parsePrecedence(P_ASSIGNMENT);
 }
 
-void Compiler::varDeclaration()
-{
-    uint8_t global = parseVariable("Expect variable name.");
+// void Compiler::varDeclaration()
+// {
+//     uint8_t global = parseVariable("Expect variable name.");
 
-    // if there is assignment var gets that expression result, else the var value is init to nil
-    if (parser.match(T_EQ))
-        expression();
-    else
-        emitByte(OP_NIL);
+//     // if there is assignment var gets that expression result, else the var value is init to nil
+//     if (parser.match(T_EQ))
+//         expression();
+//     else
+//         emitByte(OP_NIL);
 
-    parser.consume(T_SEMICOLON, "Expect ';' after variable declaration.");
+//     parser.consume(T_SEMICOLON, "Expect ';' after variable declaration.");
 
-    defineVariable(global);
-}
+//     defineVariable(global);
+// }
 
 void Compiler::expressionStatement()
 {
@@ -356,11 +358,11 @@ void Compiler::synchronize()
     parser.panicMode = false;
 
     // skips everything until we reach something that indicates the end of a statement
-    while (parser.current->type != T_EOF)
+    while (parser.current.type != T_EOF)
     {
-        if (parser.previous->type == T_SEMICOLON)
+        if (parser.previous.type == T_SEMICOLON)
             return;
-        switch (parser.current->type)
+        switch (parser.current.type)
         {
         case T_CLASS:
         case T_FUN:
@@ -383,7 +385,7 @@ void Compiler::declaration()
 {
     if (parser.match(T_VAR))
     {
-        varDeclaration();
+        // varDeclaration();
     }
     else
     {
@@ -412,7 +414,7 @@ bool Compiler::compile(ByteArray *bytearray)
 
     compilingChunk = bytearray;
 
-    parser.hhadError = false;
+    parser.hadError = false;
     parser.panicMode = false;
 
     parser.advance();
@@ -421,5 +423,5 @@ bool Compiler::compile(ByteArray *bytearray)
         declaration();
     }
     endCompiler();
-    return !parser.hhadError;
+    return !parser.hadError;
 }

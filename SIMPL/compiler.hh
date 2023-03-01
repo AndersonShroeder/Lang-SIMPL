@@ -2,8 +2,8 @@
 #define simpl_compiler_h
 
 #include "lexer.hh"
-#include "../bytearray/bytearray.hh"
-#include "../common.hh"
+#include "bytearray.hh"
+#include "common.hh"
 
 typedef void (*ParseFn)(bool canAssign);
 
@@ -32,6 +32,8 @@ namespace parseTools
         ParseFn infix;
         Precedence precedence;
 
+        ParseRule(){}
+
         ParseRule(ParseFn prefix, ParseFn infix, Precedence precedence)
         {
             this->prefix = prefix;
@@ -43,8 +45,8 @@ namespace parseTools
     class Parser
     {
     public:
-        Token *current;
-        Token *previous;
+        Token current;
+        Token previous;
         Lexer lexer;
 
         Parser() {}
@@ -61,7 +63,7 @@ namespace parseTools
         bool panicMode;
 
         // Prints where error occured
-        void errorAt(Token *token, const char *message);
+        void errorAt(Token token, const char *message);
 
         void error(const char *message);
 
@@ -75,8 +77,6 @@ namespace parseTools
 
         bool match(TokenType type);
 
-        ParseRule *getRule(TokenType type);
-
         void parsePrecedence(Precedence precedence);
     };
 
@@ -88,17 +88,15 @@ namespace compileTools
     class Compiler
     {
     public:
+
         static parseTools::Parser parser;
-
-        static ByteArray *compilingChunk;
-
+        static ByteArray *compilingChunk = NULL;
         static parseTools::ParseRule rules[49];
-
-        Compiler() {}
 
         Compiler(const char *source)
         {
-            parser = parseTools::Parser(source);
+            static parseTools::Parser parser = parseTools::Parser(source);
+            static ByteArray *compilingChunk;
             generateRules();
         }
 
@@ -170,13 +168,13 @@ namespace compileTools
 
         static void string(bool canAssign);
 
-        static void namedVariable(Token *name, bool canAssign);
+        static void namedVariable(Token name, bool canAssign);
 
         static void variable(bool canAssign);
 
         static void unary(bool canAssign);
 
-        static uint8_t identifierConstant(Token *name);
+        static uint8_t identifierConstant(Token name);
 
         static uint8_t parseVariable(const char *errorMessage);
 

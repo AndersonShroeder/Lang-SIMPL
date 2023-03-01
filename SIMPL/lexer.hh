@@ -1,7 +1,7 @@
 #ifndef LEXER_H
 #define LEXER_H
 
-#include "../common.hh"
+#include "common.hh"
 #include "token.hh"
 
 class Lexer

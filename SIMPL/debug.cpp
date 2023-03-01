@@ -1,11 +1,16 @@
-#include <stdio.hh>
 #include "debug.hh"
-#include "../values.hh"
-#include "../bytearray/bytecodes.hh"
+#include "values.hh"
+#include "bytecodes.hh"
+
+Disassembler::Disassembler(ByteArray* array, const char* name)
+{
+    bytearray = array;
+    this->name = name;
+}
 
 void Disassembler::disassembleByteArray()
 {
-    printf("== %s ==\n", main_name);
+    printf("== %s ==\n", name);
 
     // incrementing of offset is done by disassembleInstruction because instructions have different sizes
     for (int offset = 0; offset < bytearray->bytes.size();)

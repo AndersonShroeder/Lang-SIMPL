@@ -1,11 +1,11 @@
 #ifndef VM_H
 #define VM_H
 
-#include "../bytearray/bytearray.hh"
-#include "../common.hh"
-#include "../object.hh"
-#include "../table.hh"
-#include "../compiler/compiler.hh"
+#include "bytearray.hh"
+#include "common.hh"
+#include "object.hh"
+#include "table.hh"
+#include "compiler.hh"
 
 #define STACK_MAX 256
 
@@ -19,7 +19,6 @@ enum InterpretResult
 class VM
 {
 public:
-    compileTools::Compiler compiler;
     ByteArray *bytearray;
     std::vector<uint8_t>::iterator ip; // Instruction pointer which points to the current chunk being run
     Value stack[STACK_MAX];

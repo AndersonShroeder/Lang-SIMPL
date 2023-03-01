@@ -3,7 +3,7 @@
 
 #include "common.hh"
 #include "values.hh"
-#include "vm/vm.hh"
+#include "vm.hh"
 
 #define OBJ_TYPE(value) (AS_OBJ(value)->type)
 

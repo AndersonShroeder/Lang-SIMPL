@@ -1,10 +1,10 @@
 #include <stdarg.h>
 #include <string.h>
-#include "../common.hh"
+#include "common.hh"
 #include "vm.hh"
-#include "../debugger/debug.hh"
-#include "../object.hh"
-#include "../bytearray/bytecodes.hh"
+#include "debug.hh"
+#include "object.hh"
+#include "bytecodes.hh"
 
 
 /* 
@@ -226,7 +226,7 @@ InterpretResult VM::interpret(const char *source)
     using namespace compileTools;
     // Chunk to be filled from user input
     ByteArray fill;
-    compiler = Compiler(source);
+    Compiler compiler = Compiler(source);
 
     // If compilation fails, return result
     if (!compiler.compile(&fill))
