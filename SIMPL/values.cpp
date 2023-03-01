@@ -1,6 +1,6 @@
-#include "common.h"
-#include "values.h"
-#include "object.h"
+#include "common.hh"
+#include "values.hh"
+#include "object.hh"
 
 ValueArray::ValueArray()
 {

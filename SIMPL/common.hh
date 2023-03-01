@@ -11,6 +11,7 @@
 #include <vector>
 #include <cstring>
 #include <string>
+#include <functional>
 
 using std::string;
 

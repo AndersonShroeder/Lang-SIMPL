@@ -1,7 +1,7 @@
-#include <stdio.h>
-#include "debug.h"
-#include "../values.h"
-#include "../bytearray/bytecodes.h"
+#include <stdio.hh>
+#include "debug.hh"
+#include "../values.hh"
+#include "../bytearray/bytecodes.hh"
 
 void Disassembler::disassembleByteArray()
 {

@@ -1,16 +1,16 @@
 #ifndef simpl_object_h
 #define simpl_object_h
 
-#include "common.h"
-#include "values.h"
-#include "vm/vm.h"
+#include "common.hh"
+#include "values.hh"
+#include "vm/vm.hh"
 
 #define OBJ_TYPE(value) (AS_OBJ(value)->type)
 
 #define IS_STRING(value) isObjType(value, OBJ_STRING)
 
 #define AS_STRING(value) ((ObjString *)AS_OBJ(value))
-#define AS_CSTRING(value) (((ObjString *)AS_OBJ(value))->chars)
+#define AS_CSTRING(value) (((ObjString *)AS_OBJ(value)))
 
 enum ObjType
 {
@@ -28,14 +28,18 @@ class ObjString : public Obj
 {
 public:
     string str;
-    int length;
-    char *chars;
-    uint32_t hash;
+    
+    bool operator==(const ObjString &other) const
+    {
+        return str == other.str;
+    }
 };
 
-ObjString *takeString(char *chars, int length);
 
-ObjString *copyString(const char *chars, int lenght);
+
+ObjString *takeString(char *chars);
+
+ObjString *copyString(const char *chars);
 
 void printObject(Value value);
 

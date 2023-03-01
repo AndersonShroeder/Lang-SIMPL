@@ -1,7 +1,7 @@
 #ifndef simpl_debug_h
 #define simpl_debug_h
 
-#include "../bytearray/bytearray.h"
+#include "../bytearray/bytearray.hh"
 
 class Disassembler
 {

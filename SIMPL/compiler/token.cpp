@@ -1,5 +1,5 @@
-#include "token.h"
-#include "lexer.h"
+#include "token.hh"
+#include "lexer.hh"
 
 Token::Token(TokenType type, Lexer *lex, const char *message, bool error)
 {

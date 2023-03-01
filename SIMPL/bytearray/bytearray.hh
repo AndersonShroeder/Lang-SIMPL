@@ -1,8 +1,8 @@
 #ifndef BYTE_ARRAY_H
 #define BYTE_ARRAY_H
 
-#include "../common.h"
-#include "../values.h"
+#include "../common.hh"
+#include "../values.hh"
 
 class ByteArray
 {

@@ -1,8 +1,8 @@
 #ifndef LEXER_H
 #define LEXER_H
 
-#include "../common.h"
-#include "token.h"
+#include "../common.hh"
+#include "token.hh"
 
 class Lexer
 {

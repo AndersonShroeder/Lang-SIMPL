@@ -1,4 +1,4 @@
-#include "bytearray.h"
+#include "bytearray.hh"
 
 void ByteArray::writeByte(uint8_t byte, int line)
 {
@@ -8,6 +8,6 @@ void ByteArray::writeByte(uint8_t byte, int line)
 
 int ByteArray::addConstant(Value value)
 {
-    constants.writeValue(value);
+    // constants.writeValue(value);
     return constants.size() - 1;
 }

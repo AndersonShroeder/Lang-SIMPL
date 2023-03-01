@@ -1,11 +1,11 @@
-#include "compiler.h"
-#include "lexer.h"
-#include "../vm/vm.h"
-#include "../object.h"
-#include "../bytearray/bytecodes.h"
+#include "compiler.hh"
+#include "lexer.hh"
+#include "../vm/vm.hh"
+#include "../object.hh"
+#include "../bytearray/bytecodes.hh"
 
 #ifdef DEBUG_PRINT_CODE
-#include "../debugger/debug.h"
+#include "../debugger/debug.hh"
 #endif
 
 using namespace compileTools;
@@ -165,7 +165,7 @@ void Compiler::endCompiler()
 {
     emitReturn();
 #ifdef DEBUG_PRINT_CODE
-    if (!parser.hadError)
+    if (!parser.hhadError)
     {
         Disassembler debug = Disassembler(currentChunk(), "Code");
         debug.disassembleByteArray();
@@ -407,12 +407,12 @@ void Compiler::statement()
     }
 }
 
-bool Compiler::compile(const char *source, ByteArray *bytearray)
+bool Compiler::compile(ByteArray *bytearray)
 {
 
     compilingChunk = bytearray;
 
-    parser.hadError = false;
+    parser.hhadError = false;
     parser.panicMode = false;
 
     parser.advance();
@@ -421,5 +421,5 @@ bool Compiler::compile(const char *source, ByteArray *bytearray)
         declaration();
     }
     endCompiler();
-    return !parser.hadError;
+    return !parser.hhadError;
 }

@@ -1,7 +1,7 @@
 #ifndef simpl_value_h
 #define simpl_value_h
 
-#include "common.h"
+#include "common.hh"
 
 class Obj;
 class ObjString;

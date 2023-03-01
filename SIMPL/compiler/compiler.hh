@@ -1,9 +1,9 @@
 #ifndef simpl_compiler_h
 #define simpl_compiler_h
 
-#include "lexer.h"
-#include "../bytearray/bytearray.h"
-#include "../common.h"
+#include "lexer.hh"
+#include "../bytearray/bytearray.hh"
+#include "../common.hh"
 
 typedef void (*ParseFn)(bool canAssign);
 
@@ -198,7 +198,7 @@ namespace compileTools
 
         static void statement();
 
-        static bool compile(const char *source, ByteArray *bytearray);
+        static bool compile(ByteArray *bytearray);
     };
 };
 

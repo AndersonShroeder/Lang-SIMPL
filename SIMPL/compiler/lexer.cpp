@@ -1,5 +1,5 @@
-#include "token.h"
-#include "lexer.h"
+#include "token.hh"
+#include "lexer.hh"
 
 Lexer::Lexer(const char *source)
 {

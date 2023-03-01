@@ -1,12 +1,10 @@
 #include <stdarg.h>
 #include <string.h>
-#include "../common.h"
-#include "vm.h"
-#include "../compiler/compiler.h"
-#include "../debugger/debug.h"
-#include "../object.h"
-#include "../memory.h"
-#include "../bytearray/bytecodes.h"
+#include "../common.hh"
+#include "vm.hh"
+#include "../debugger/debug.hh"
+#include "../object.hh"
+#include "../bytearray/bytecodes.hh"
 
 
 /* 
@@ -34,7 +32,7 @@ void VM::runtimeError(const char *format, ...)
     fputs("\n", stderr);
 
     // Get line/chunk that caused error for debugging
-    size_t instruction = *(this->ip - this->bytearray->code.size() - 1);
+    size_t instruction = *(this->ip - this->bytearray->bytes.size() - 1);
     int line = this->bytearray->lines[instruction];
     fprintf(stderr, "[line %d] in script\n", line);
     resetStack();
@@ -68,7 +66,7 @@ InterpretResult VM::run()
         printf(" ]");
     }
     printf("\n");
-    // disassembleInstruction(this->chunk, int(this->ip - this->bytearray->code));
+    // disassembleInstruction(this->chunk, int(this->ip - this->bytearray->bytes));
 #endif
 
     for (;;)
@@ -80,7 +78,7 @@ InterpretResult VM::run()
         {
             if (IS_STRING(peek(0)) && IS_STRING(peek(1)))
             {
-                concatenate();
+                // concatenate();
             }
             else if (IS_NUMBER(peek(0)) && IS_NUMBER(peek(1)))
             {
@@ -166,38 +164,38 @@ InterpretResult VM::run()
             pop();
             break;
 
-        case OP_DEFINE_GLOBAL:
-        {
-            ObjString* name = READ_STRING();
-            globals.tableSet(name, peek(0));
-            pop();
-            break;
-        }
+        // case OP_DEFINE_GLOBAL:
+        // {
+        //     ObjString* name = READ_STRING();
+        //     globals.tableSet(name, peek(0));
+        //     pop();
+        //     break;
+        // }
 
-        case OP_GET_GLOBAL:
-        {
-            ObjString* name = READ_STRING();
-            Value value;
-            if (!(globals.tableGet(name, &value)))
-            {
-                runtimeError("Undefined variable '%s'.", name->chars);
-                return INTERPRET_RUNTIME_ERROR;
-            }
-            push(value);
-            break;
-        }
+        // case OP_GET_GLOBAL:
+        // {
+        //     ObjString* name = READ_STRING();
+        //     Value value;
+        //     if (!(globals.tableGet(name, &value)))
+        //     {
+        //         runtimeError("Undefined variable '%s'.", name->chars);
+        //         return INTERPRET_RUNTIME_ERROR;
+        //     }
+        //     push(value);
+        //     break;
+        // }
 
-        case OP_SET_GLOBAL:
-        {
-            ObjString* name = READ_STRING();
-            if (globals.tableSet(name, peek(0)))
-            {
-                globals.tableDelete(name);
-                runtimeError("Undefined variable '%s'", name->chars);
-                return INTERPRET_RUNTIME_ERROR;
-            }
-            break;
-        }
+        // case OP_SET_GLOBAL:
+        // {
+        //     ObjString* name = READ_STRING();
+        //     if (globals.tableSet(name, peek(0)))
+        //     {
+        //         globals.tableDelete(name);
+        //         runtimeError("Undefined variable '%s'", name->chars);
+        //         return INTERPRET_RUNTIME_ERROR;
+        //     }
+        //     break;
+        // }
 
         case OP_GREATER:
             BINARY_OP(BOOL_VAL, >);
@@ -223,30 +221,22 @@ InterpretResult VM::run()
 #undef BINARY_OP
 }
 
-VM::VM()
-{
-    resetStack();
-}
-
-VM::~VM()
-{
-    freeObjects(this);
-}
-
 InterpretResult VM::interpret(const char *source)
 {
+    using namespace compileTools;
     // Chunk to be filled from user input
     ByteArray fill;
+    compiler = Compiler(source);
 
     // If compilation fails, return result
-    if (!compile(source, &fill))
+    if (!compiler.compile(&fill))
     {
         return INTERPRET_COMPILE_ERROR;
     }
 
     // otherwise the chunk is run on the virtual machine
-    this->chunk = &fill;
-    this->ip = this->bytearray->code.begin();
+    this->bytearray = &fill;
+    this->ip = this->bytearray->bytes.begin();
     InterpretResult result = run();
 
     return result;
@@ -278,18 +268,18 @@ bool VM::isFalsey(Value value)
     return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
 }
 
-void VM::concatenate()
-{
-    ObjString *b = AS_STRING(pop());
-    ObjString *a = AS_STRING(pop());
-    std::string(a->chars) + std::string(b->chars);
+// void VM::concatenate()
+// {
+//     ObjString *b = AS_STRING(pop());
+//     ObjString *a = AS_STRING(pop());
+//     std::string(a->chars) + std::string(b->chars);
 
-    int length = (a->length) + (b->length);
-    char *chars = ALLOCATE(char, length + 1);
-    memcpy(chars, a->chars, a->length);
-    memcpy(chars + (a->length), b->chars, b->length);
-    chars[length] = '\0';
+//     int length = (a->length) + (b->length);
+//     char *chars = ALLOCATE(char, length + 1);
+//     memcpy(chars, a->chars, a->length);
+//     memcpy(chars + (a->length), b->chars, b->length);
+//     chars[length] = '\0';
 
-    ObjString *result = takeString(chars, length);
-    push(OBJ_VAL(result));
-}
+//     ObjString *result = takeString(chars, length);
+//     push(OBJ_VAL(result));
+// }

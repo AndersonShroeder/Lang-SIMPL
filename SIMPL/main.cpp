@@ -1,7 +1,7 @@
-#include "common.h"
-#include "bytecodes.h"
-#include "debug.h"
-#include "vm.h"
+#include "common.hh"
+#include "bytearray/bytecodes.hh"
+#include "debugger/debug.hh"
+#include "vm/vm.hh"
 
 VM vm = VM();
 
