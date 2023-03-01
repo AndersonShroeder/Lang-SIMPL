@@ -62,18 +62,6 @@ bool Lexer::match(char expected)
     return true;
 }
 
-// checks digit
-bool Lexer::isDigit(char c)
-{
-    return c >= '0' && c <= '9';
-}
-
-// check for alpha
-bool Lexer::isAlpha(char c)
-{
-    return (c >= 'A' && c <= 'z') || (c >= 'A' && c <= 'Z') || c == '_';
-}
-
 // Looks one char ahead without consuming it
 char Lexer::peek()
 {
@@ -173,15 +161,15 @@ Token Lexer::string()
 
 Token Lexer::number()
 {
-    while (isDigit(peek()))
+    while (isdigit(peek()))
         advance();
 
     // check for decimal
-    if (peek() == '.' && isDigit(peekNext()))
+    if (peek() == '.' && isdigit(peekNext()))
     {
         advance();
 
-        while (isDigit(peek()))
+        while (isdigit(peek()))
             advance();
     }
 
@@ -190,7 +178,7 @@ Token Lexer::number()
 
 Token Lexer::identifier()
 {
-    while (isAlpha(peek()) || isDigit(peek()))
+    while (isalpha(peek()) || isdigit(peek()))
         advance();
     return Token(identifierType(), this, NULL);
 }
@@ -204,11 +192,11 @@ Token Lexer::scanToken()
         return Token(T_EOF, this, NULL);
 
     char c = advance();
-    if (isAlpha(c))
+    if (isalpha(c))
     {
         return identifier();
     }
-    if (isDigit(c))
+    if (isdigit(c))
     {
         return number();
     }

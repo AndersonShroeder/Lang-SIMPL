@@ -6,8 +6,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <unordered_map>
 #include <iostream>
 #include <vector>
 #include <cstring>
+#include <string>
+
+using std::string;
 
 #endif

@@ -1,11 +1,12 @@
 #ifndef BYTE_ARRAY_H
 #define BYTE_ARRAY_H
 
-#include "common.h"
-#include "values.h"
+#include "../common.h"
+#include "../values.h"
 
 class ByteArray
 {
+    public:
     ValueArray constants;
     std::vector<int> lines;
     std::vector<uint8_t> bytes;

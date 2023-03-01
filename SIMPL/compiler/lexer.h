@@ -1,7 +1,8 @@
 #ifndef LEXER_H
 #define LEXER_H
 
-#include ".\SIMPL\common.h"
+#include "../common.h"
+#include "token.h"
 
 class Lexer
 {
@@ -11,6 +12,8 @@ public:
   const char *current;
   std::vector<Token> tokens = {};
 
+  Lexer(){}
+
   Lexer(const char *source);
 
   void skipWhitespace();
@@ -18,10 +21,6 @@ public:
   bool isEnd();
 
   bool match(char expected);
-
-  bool isDigit(char character);
-
-  bool isAlpha(char character);
 
   Token scanToken();
 

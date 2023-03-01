@@ -1,8 +1,10 @@
-#ifndef simpl_vm_h
-#define simpl_vm_h
+#ifndef VM_H
+#define VM_H
 
-#include "chunk.h"
-#include "table.h"
+#include "../bytearray/bytearray.h"
+#include "../common.h"
+#include "../object.h"
+#include "../table.h"
 
 #define STACK_MAX 256
 
@@ -16,12 +18,12 @@ enum InterpretResult
 class VM
 {
 public:
-    Chunk *chunk;
+    ByteArray *bytearray;
     std::vector<uint8_t>::iterator ip; // Instruction pointer which points to the current chunk being run
     Value stack[STACK_MAX];
     Value *stackTop;
-    Table strings;
-    Table globals;
+    Table<ObjString, Value> strings;
+    Table<ObjString, Value> globals;
     Obj* objects;
 
     VM();

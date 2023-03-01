@@ -2,8 +2,8 @@
 #define simpl_object_h
 
 #include "common.h"
-#include "value.h"
-#include "vm.h"
+#include "values.h"
+#include "vm/vm.h"
 
 #define OBJ_TYPE(value) (AS_OBJ(value)->type)
 
@@ -27,6 +27,7 @@ public:
 class ObjString : public Obj
 {
 public:
+    string str;
     int length;
     char *chars;
     uint32_t hash;

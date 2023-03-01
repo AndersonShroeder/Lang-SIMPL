@@ -1,9 +1,21 @@
 #ifndef simpl_debug_h
 #define simpl_debug_h
 
-#include "chunk.h"
+#include "../bytearray/bytearray.h"
 
-void disassembleChunk(Chunk *chunk, const char *name);
-int disassembleInstruction(Chunk *chunk, int offset);
+class Disassembler
+{
+public:
+    ByteArray *bytearray;
+    const char *main_name;
+
+    void disassembleByteArray();
+
+    int constantInstruction(const char *name, int offset);
+
+    int simpleInstruction(const char *name, int offset);
+
+    int disassembleInstruction(int offset);
+};
 
 #endif

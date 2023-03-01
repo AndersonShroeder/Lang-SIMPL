@@ -1,11 +1,12 @@
 #include <stdarg.h>
 #include <string.h>
-#include "common.h"
+#include "../common.h"
 #include "vm.h"
-#include "compiler.h"
-#include "debug.h"
-#include "object.h"
-#include "memory.h"
+#include "../compiler/compiler.h"
+#include "../debugger/debug.h"
+#include "../object.h"
+#include "../memory.h"
+#include "../bytearray/bytecodes.h"
 
 
 /* 
@@ -33,8 +34,8 @@ void VM::runtimeError(const char *format, ...)
     fputs("\n", stderr);
 
     // Get line/chunk that caused error for debugging
-    size_t instruction = *(this->ip - this->chunk->code.size() - 1);
-    int line = this->chunk->lines[instruction];
+    size_t instruction = *(this->ip - this->bytearray->code.size() - 1);
+    int line = this->bytearray->lines[instruction];
     fprintf(stderr, "[line %d] in script\n", line);
     resetStack();
 }
@@ -43,7 +44,7 @@ void VM::runtimeError(const char *format, ...)
 InterpretResult VM::run()
 {
 #define READ_BYTE() ((this->ip)++)
-#define READ_CONSTANT() (this->chunk->constants.values[*READ_BYTE()])
+#define READ_CONSTANT() (this->bytearray->constants.values[*READ_BYTE()])
 #define READ_STRING() AS_STRING(READ_CONSTANT())
 #define BINARY_OP(valueType, op)                        \
     do                                                  \
@@ -67,7 +68,7 @@ InterpretResult VM::run()
         printf(" ]");
     }
     printf("\n");
-    // disassembleInstruction(this->chunk, int(this->ip - this->chunk->code));
+    // disassembleInstruction(this->chunk, int(this->ip - this->bytearray->code));
 #endif
 
     for (;;)
@@ -235,7 +236,7 @@ VM::~VM()
 InterpretResult VM::interpret(const char *source)
 {
     // Chunk to be filled from user input
-    Chunk fill;
+    ByteArray fill;
 
     // If compilation fails, return result
     if (!compile(source, &fill))
@@ -245,7 +246,7 @@ InterpretResult VM::interpret(const char *source)
 
     // otherwise the chunk is run on the virtual machine
     this->chunk = &fill;
-    this->ip = this->chunk->code.begin();
+    this->ip = this->bytearray->code.begin();
     InterpretResult result = run();
 
     return result;
