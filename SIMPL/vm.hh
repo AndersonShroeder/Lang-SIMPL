@@ -47,7 +47,7 @@ public:
 
     bool isFalsey(Value value);
 
-    void concatenate();
+    Value concatenate();
 };
 
 extern VM vm;

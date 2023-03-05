@@ -298,26 +298,26 @@ void Compiler::number(bool canAssign)
 // // Creates a string object and wraps it in Value then adds to constant table
 void Compiler::string(bool canAssign)
 {
-    // // +1 and -2 trim the leading and ending qoutation marks
-    // emitConstant(OBJ_VAL(copyString(parser.previous.start + 1, parser.previous.length - 2)));
+    // +1 and -2 trim the leading and ending qoutation marks
+    emitConstant(OBJ_VAL(makeString(parser.previous.start + 1, parser.previous.length - 2)));
 }
 
 void Compiler::namedVariable(Token name, bool canAssign)
 {
-    // uint8_t arg = identifierConstant(name);
+    uint8_t arg = identifierConstant(name);
 
-    // if (canAssign && parser.match(T_EQ))
-    // {
-    //     expression();
-    //     emitBytes(OP_SET_GLOBAL, arg);
-    // }
-    // else
-    //     emitBytes(OP_GET_GLOBAL, arg);
+    if (canAssign && parser.match(T_EQ))
+    {
+        expression();
+        emitBytes(OP_SET_GLOBAL, arg);
+    }
+    else
+        emitBytes(OP_GET_GLOBAL, arg);
 }
 
 void Compiler::variable(bool canAssign)
 {
-    // namedVariable(parser.previous, canAssign);
+    namedVariable(parser.previous, canAssign);
 }
 
 // Unary Negation
@@ -343,21 +343,21 @@ void Compiler::unary(bool canAssign)
 
 // returns index of variable name as a string in chunk -> a string name is too big for
 // byte code stream which is why we access using the index of type uint8_t
-// uint8_t Compiler::identifierConstant(Token name)
-// {
-//     return makeConstant(OBJ_VAL(copyString(name.start, name.length)));
-// }
+uint8_t Compiler::identifierConstant(Token name)
+{
+    return makeConstant(OBJ_VAL(makeString(name.start, name.length)));
+}
 
-// uint8_t Compiler::parseVariable(const char *errorMessage)
-// {
-//     parser.consume(T_ID, errorMessage);
-//     return identifierConstant(parser.previous);
-// }
+uint8_t Compiler::parseVariable(const char *errorMessage)
+{
+    parser.consume(T_ID, errorMessage);
+    return identifierConstant(parser.previous);
+}
 
-// void Compiler::defineVariable(uint8_t global)
-// {
-//     emitBytes(OP_DEFINE_GLOBAL, global);
-// }
+void Compiler::defineVariable(uint8_t global)
+{
+    emitBytes(OP_DEFINE_GLOBAL, global);
+}
 
 
 void Compiler::expression()
@@ -365,20 +365,20 @@ void Compiler::expression()
     parser.parsePrecedence(P_ASSIGNMENT, this);
 }
 
-// void Compiler::varDeclaration()
-// {
-//     uint8_t global = parseVariable("Expect variable name.");
+void Compiler::varDeclaration()
+{
+    uint8_t global = parseVariable("Expect variable name.");
 
-//     // if there is assignment var gets that expression result, else the var value is init to nil
-//     if (parser.match(T_EQ))
-//         expression();
-//     else
-//         emitByte(OP_NIL);
+    // if there is assignment var gets that expression result, else the var value is init to nil
+    if (parser.match(T_EQ))
+        expression();
+    else
+        emitByte(OP_NIL);
 
-//     parser.consume(T_SEMICOLON, "Expect ';' after variable declaration.");
+    parser.consume(T_SEMICOLON, "Expect ';' after variable declaration.");
 
-//     defineVariable(global);
-// }
+    defineVariable(global);
+}
 
 void Compiler::expressionStatement()
 {

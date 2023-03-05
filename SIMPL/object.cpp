@@ -1,30 +1,23 @@
 #include "object.hh"
 
-// Creates a ObjString object on the heap and inits fields
-// static ObjString* makeString(const char* chars)
-// {
-//     ObjString* stringObj;
-//     stringObj->str = string(chars);
-//     return stringObj;
-// }
 
-// ObjString* copyString(const char* chars)
-// {
-//     ObjString* stringObj;
-//     stringObj->str = string(chars);
+std::shared_ptr<ObjString> makeString(const char* chars, int length)
+{
+    std::shared_ptr<ObjString> stringObj = std::make_shared<ObjString>();
+    stringObj->str = std::string_view(chars).substr(0, length);
 
-//     ObjString* interned = vm.strings.tableFindString(stringObj);
-//     if (interned != NULL) return interned;
+    // ObjString* interned = vm.strings.tableFindString(stringObj);
+    // if (interned != NULL) return interned;
 
-//     return makeString(chars);
-// }
+    return stringObj;
+}
 
 void printObject(Value value)
 {
     switch (OBJ_TYPE(value))
     {
         case OBJ_STRING:
-            printf("%s", AS_CSTRING(value));
+            std::cout << AS_CSTRING(value)->str + '\0';
             break;
     }
 }

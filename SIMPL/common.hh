@@ -11,7 +11,10 @@
 #include <vector>
 #include <cstring>
 #include <string>
+#include <string_view>
 #include <functional>
+#include <memory>
+#include <variant>
 
 using std::string;
 

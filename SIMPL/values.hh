@@ -18,12 +18,9 @@ enum ValueType
 struct Value
 {
     ValueType type;
-    union
-    {
-        bool boolean;
-        double number;
-        Obj* obj;
-    } as;
+
+    std::variant<bool, double, std::shared_ptr<Obj>> val;
+
 };
 
 // Check if a Value type has a specific C type
@@ -33,15 +30,15 @@ struct Value
 #define IS_OBJ(value)   ((value).type == VAL_OBJ)
 
 // converts Value types into C values
-#define AS_OBJ(value)   ((value).as.obj)
-#define AS_BOOL(value) ((value).as.boolean)
-#define AS_NUMBER(value) ((value).as.number)
+#define AS_OBJ(value)   ((std::get<std::shared_ptr<Obj>>(value.val)))
+#define AS_BOOL(value) ((std::get<bool>(value.val)))
+#define AS_NUMBER(value) ((std::get<double>(value.val)))
 
 // converts C values into Value type -> allows dynamic typing
-#define BOOL_VAL(value) ((Value){VAL_BOOL, {.boolean = value}})
-#define NIL_VAL ((Value){VAL_NIL, {.number = 0}})
-#define NUMBER_VAL(value) ((Value){VAL_NUMBER, {.number = value}})
-#define OBJ_VAL(object) ((Value){VAL_OBJ, {.obj = (Obj*)object}})
+#define BOOL_VAL(value) ((Value){VAL_BOOL, value})
+#define NIL_VAL ((Value){VAL_NIL, 0.0})
+#define NUMBER_VAL(value) ((Value){VAL_NUMBER, value})
+#define OBJ_VAL(object) ((Value){VAL_OBJ, object})
 
 
 class ValueArray

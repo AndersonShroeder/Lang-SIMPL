@@ -82,7 +82,8 @@ InterpretResult VM::run()
         {
             if (IS_STRING(peek(0)) && IS_STRING(peek(1)))
             {
-                // concatenate();
+                Value val = concatenate();
+                push(val);
             }
             else if (IS_NUMBER(peek(0)) && IS_NUMBER(peek(1)))
             {
@@ -135,7 +136,7 @@ InterpretResult VM::run()
         case OP_PRINT:
         {
             printValue(pop());
-            printf("\n");
+            std::cout << '\n';
             break;
         }
 
@@ -271,18 +272,27 @@ bool VM::isFalsey(Value value)
     return IS_NIL(value) || (IS_BOOL(value) && !AS_BOOL(value));
 }
 
-// void VM::concatenate()
-// {
-//     ObjString *b = AS_STRING(pop());
-//     ObjString *a = AS_STRING(pop());
-//     std::string(a->chars) + std::string(b->chars);
+Value VM::concatenate()
+{
+    std::shared_ptr<ObjString> b = AS_STRING(pop());
+    std::shared_ptr<ObjString> a = AS_STRING(pop());
 
-//     int length = (a->length) + (b->length);
-//     char *chars = ALLOCATE(char, length + 1);
-//     memcpy(chars, a->chars, a->length);
-//     memcpy(chars + (a->length), b->chars, b->length);
-//     chars[length] = '\0';
+    const int aLen = a->str.size();
+    const int bLen = b->str.size();
 
-//     ObjString *result = takeString(chars, length);
-//     push(OBJ_VAL(result));
-// }
+    const int len = aLen + bLen;
+
+    char characters[len];
+
+    for (int i = 0; i < aLen; i++)
+    {
+        characters[i] = a->str.at(i);
+    }
+
+    for (int i = 0 ; i < bLen; i++)
+    {
+        characters[i + aLen] = b->str.at(i);
+    }
+
+    return OBJ_VAL(makeString(characters, len));
+}

@@ -9,8 +9,8 @@
 
 #define IS_STRING(value) isObjType(value, OBJ_STRING)
 
-#define AS_STRING(value) ((ObjString *)AS_OBJ(value))
-#define AS_CSTRING(value) (((ObjString *)AS_OBJ(value)))
+#define AS_STRING(value) (std::static_pointer_cast<ObjString>(AS_OBJ(value)))
+#define AS_CSTRING(value) (std::static_pointer_cast<ObjString>(AS_OBJ(value)))
 
 enum ObjType
 {
@@ -24,10 +24,12 @@ public:
     struct Obj *next;
 };
 
+
+// Optimize this -> string view instead of string
 class ObjString : public Obj
 {
 public:
-    string str;
+    std::string str;
     
     bool operator==(const ObjString &other) const
     {
@@ -35,11 +37,7 @@ public:
     }
 };
 
-
-
-ObjString *takeString(char *chars);
-
-ObjString *copyString(const char *chars);
+std::shared_ptr<ObjString> makeString(const char *chars, int length);
 
 void printObject(Value value);
 
