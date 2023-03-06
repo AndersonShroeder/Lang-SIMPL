@@ -48,6 +48,8 @@ public:
     };
 };
 
+
+
 /**
 
     @brief This class encapsulates utility necessary for SIMPL's recursive descent parser. The Parser object contains a Lexer
@@ -93,13 +95,21 @@ public:
     void parsePrecedence(Precedence precedence, Compiler *compiler);
 };
 
-// Represents a local variable with name "name" and scope of depth "depth"
+
+
+/**
+
+    @brief This class represents the SIMPL compiler which provides functionality for compiling SIMPL source code into bytecode instructions.
+    The Compiler class contains a set of methods for generating bytecode instructions from the source code, as well as a set of data structures 
+    for keeping track of local and global variables during the compilation process. The Compiler is responsible for generating a ByteArray 
+    object that contains the final compiled bytecode instructions, which can then be executed by the SIMPL virtual machine. 
+*/
+
 struct Local
 {
     int depth;
     Token name;
 };
-
 
 class Compiler
 {
@@ -124,13 +134,19 @@ public:
 
     void emitByte(uint8_t byte);
 
+    int emitJump(uint8_t instruction);
+
     void emitBytes(uint8_t byte1, uint8_t byte2);
+
+    void emitLoop(int loopStart);
 
     void emitReturn();
 
     uint8_t makeConstant(Value value);
 
     void emitConstant(Value value);
+
+    void patchJump(int offset);
 
     void endCompiler();
 
@@ -160,6 +176,10 @@ public:
 
     void defineVariable(uint8_t global);
 
+    void and_(bool canAssign);
+
+    void or_(bool canAssign);
+
     ParseRule *getRule(TokenType type);
 
     void expression();
@@ -170,7 +190,11 @@ public:
 
     void expressionStatement();
 
+    void ifStatement();
+
     void printStatement();
+
+    void whileStatement();
 
     void synchronize();
 

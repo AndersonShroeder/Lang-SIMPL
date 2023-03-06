@@ -17,6 +17,17 @@ ByteArray *Compiler::currentChunk()
 // PARSER
 //////////////////////////////////////////////////
 
+/**
+
+    Function to generate rules for different tokens and their corresponding parsing functions, precedence values.
+    The rules are stored in a map named 'rules'.
+    Each token type is associated with three properties:
+        A pointer to the prefix parse function for the token.
+        A pointer to the infix parse function for the token.
+        A precedence value for the token.
+    @return void
+    */
+
 void Parser::generateRules()
 {
     rules[T_LPAREN] = {Compiler::grouping, NULL, P_NONE};
@@ -41,7 +52,7 @@ void Parser::generateRules()
     rules[T_ID] = {Compiler::variable, NULL, P_NONE};
     rules[T_STR] = {Compiler::string, NULL, P_NONE};
     rules[T_NUM] = {Compiler::number, NULL, P_NONE};
-    rules[T_AND] = {NULL, NULL, P_NONE};
+    rules[T_AND] = {NULL, Compiler::and_, P_NONE};
     rules[T_CLASS] = {NULL, NULL, P_NONE};
     rules[T_ELSE] = {NULL, NULL, P_NONE};
     rules[T_FALSE] = {Compiler::literal, NULL, P_NONE};
@@ -49,7 +60,7 @@ void Parser::generateRules()
     rules[T_FUN] = {NULL, NULL, P_NONE};
     rules[T_IF] = {NULL, NULL, P_NONE};
     rules[T_NIL] = {Compiler::literal, NULL, P_NONE};
-    rules[T_OR] = {NULL, NULL, P_NONE};
+    rules[T_OR] = {NULL, Compiler::or_, P_NONE};
     rules[T_PRINT] = {NULL, NULL, P_NONE};
     rules[T_RETURN] = {NULL, NULL, P_NONE};
     rules[T_SUPER] = {NULL, NULL, P_NONE};
@@ -61,7 +72,15 @@ void Parser::generateRules()
     rules[T_EOF] = {NULL, NULL, P_NONE};
 }
 
-// Prints where error occured
+/**
+
+    Function to print an error message with the line number and token where the error occured.
+    If 'panicMode' is true, it ignores further errors during the compilation process.
+    @param token: The token where the error occured.
+    @param message: The error message to be printed.
+    @return void
+    */
+
 void Parser::errorAt(Token token, const char *message)
 {
     // If we have seen a previous error we ignore future errors when compile
@@ -90,15 +109,38 @@ void Parser::errorAt(Token token, const char *message)
     hadError = true;
 }
 
+/**
+
+    Function to print an error message at the previous token with the given message.
+    Calls 'errorAt' function with the previous token and the given message.
+    @param message: The error message to be printed.
+    @return void
+    */
+
 void Parser::error(const char *message)
 {
     errorAt(previous, message);
 }
 
+/**
+
+    Function to print an error message at the current token with the given message.
+    Calls 'errorAt' function with the current token and the given message.
+    @param message: The error message to be printed.
+    @return void
+    */
+
 void Parser::errorAtCurrent(const char *message)
 {
     errorAt(current, message);
 }
+
+/**
+
+    Function to advance the lexer to the next token and update the previous and current tokens.
+    If the current token is an error token, calls 'errorAtCurrent' function with the error message.
+    @return void
+    */
 
 void Parser::advance()
 {
@@ -113,6 +155,15 @@ void Parser::advance()
     }
 }
 
+/**
+
+    Function to consume the current token if it is of the expected type, else calls 'errorAtCurrent' function
+    with the given error message.
+    @param type: The expected type of the token to be consumed.
+    @param message: The error message to be printed if the token is not of the expected type.
+    @return void
+    */
+
 void Parser::consume(TokenType type, const char *message)
 {
     if (current.type == type)
@@ -124,12 +175,26 @@ void Parser::consume(TokenType type, const char *message)
     errorAtCurrent(message);
 }
 
+/**
+
+    Function to check if the current token is of the given type.
+    @param type: The token type to be checked.
+    @return bool: True if the current token is of the given type, false otherwise.
+    */
+
 bool Parser::check(TokenType type)
 {
     return current.type == type;
 }
 
-// If a token has type consume the token and move on, otherwise leave it
+/**
+
+    Function to match the current token with the expected token type and advance the lexer if they match.
+    If they don't match, returns false.
+    @param type: The expected token type to be matched with the current token.
+    @return bool: True if the current token is of the given type and the lexer is advanced, false otherwise.
+    */
+
 bool Parser::match(TokenType type)
 {
     if (!check(type))
@@ -139,13 +204,28 @@ bool Parser::match(TokenType type)
     return true;
 }
 
+/**
+
+    Function to get the parse rule for a given token type from the 'rules' map of the parser.
+    @param type: The token type for which the parse rule is to be obtained.
+    @return ParseRule*: A pointer to the parse rule for the given token type.
+    */
 
 ParseRule *Compiler::getRule(TokenType type)
 {
     return &parser.rules[type];
 }
 
-void Parser::parsePrecedence(Precedence precedence, Compiler* compiler)
+/**
+
+    Function to parse an expression with the given precedence level using Pratt parsing algorithm.
+    Advances the lexer to the next token and parses the expression recursively.
+    @param precedence: The precedence level of the current expression to be parsed.
+    @param compiler: A pointer to the compiler object.
+    @return void
+    */
+
+void Parser::parsePrecedence(Precedence precedence, Compiler *compiler)
 {
     advance();
     ParseFn prefixRule = compiler->getRule(previous.type)->prefix;
@@ -186,6 +266,25 @@ void Compiler::emitBytes(uint8_t byte1, uint8_t byte2)
     emitByte(byte2);
 }
 
+void Compiler::emitLoop(int loopStart)
+{
+    emitByte(OP_LOOP);
+
+    int offset = currentChunk()->bytes.size() - loopStart + 2;
+    if (offset > UINT16_MAX) parser.error("Loop body too large.");
+
+    emitByte((offset >> 8) & 0xff);
+    emitByte(offset & 0xff);
+}
+
+int Compiler::emitJump(uint8_t instruction)
+{
+    emitByte(instruction);
+    emitByte(0xff);
+    emitByte(0xff);
+    return currentChunk()->bytes.size() -2;
+}
+
 void Compiler::emitReturn()
 {
     emitByte(OP_RETURN);
@@ -206,6 +305,19 @@ uint8_t Compiler::makeConstant(Value value)
 void Compiler::emitConstant(Value value)
 {
     emitBytes(OP_CONSTANT, makeConstant(value));
+}
+
+void Compiler::patchJump(int offset)
+{
+    int jump = currentChunk()->bytes.size() - offset - 2;
+
+    if (jump > UINT16_MAX)
+    {
+        parser.error("Too much to jump ober.");
+    }
+
+    currentChunk()->bytes[offset] = (jump >> 8) & 0xff;
+    currentChunk()->bytes[offset+1] = jump & 0xff;
 }
 
 void Compiler::endCompiler()
@@ -302,11 +414,11 @@ void Compiler::string(bool canAssign)
     emitConstant(OBJ_VAL(makeString(parser.previous.start + 1, parser.previous.length - 2)));
 }
 
-int Compiler::resolveLocal(Token& name)
+int Compiler::resolveLocal(Token &name)
 {
     for (int i = localCount - 1; i >= 0; i--)
     {
-        Local* local = &locals[i];
+        Local *local = &locals[i];
         if (strcmp(name.start, local->name.start))
         {
             if (local->depth == -1)
@@ -334,7 +446,6 @@ void Compiler::namedVariable(Token name, bool canAssign)
         getOp = OP_GET_GLOBAL;
         setOp = OP_SET_GLOBAL;
     }
-
 
     if (canAssign && parser.match(T_EQ))
     {
@@ -381,13 +492,14 @@ uint8_t Compiler::identifierConstant(Token name)
 void Compiler::declareVariable()
 {
     // because globals are late bound simply return if not in scope
-    if (scopeDepth == 0) return;
+    if (scopeDepth == 0)
+        return;
 
-    Token& name = parser.previous;
+    Token &name = parser.previous;
 
     for (int i = localCount - 1; i >= 0; i--)
     {
-        Local* local = &locals[i];
+        Local *local = &locals[i];
         if (local->depth != -1 && local->depth < scopeDepth)
         {
             break;
@@ -405,7 +517,7 @@ void Compiler::declareVariable()
         return;
     }
 
-    Local* local = &locals[localCount++];
+    Local *local = &locals[localCount++];
     local->depth = -1;
     local->name = name;
 }
@@ -415,7 +527,8 @@ uint8_t Compiler::parseVariable(const char *errorMessage)
     parser.consume(T_ID, errorMessage);
 
     declareVariable();
-    if (scopeDepth > 0) return 0;
+    if (scopeDepth > 0)
+        return 0;
 
     return identifierConstant(parser.previous);
 }
@@ -431,6 +544,29 @@ void Compiler::defineVariable(uint8_t global)
     emitBytes(OP_DEFINE_GLOBAL, global);
 }
 
+// when this is called for expr A and B, A is on top of the stack, so if A is false we skip the rest of 
+// B and just return A, else B also gets evaluated.
+void Compiler::and_(bool canAssign)
+{
+    int endJump = emitJump(OP_JUMP_IF_FALSE);
+
+    emitByte(OP_POP);
+    parser.parsePrecedence(P_AND, this);
+
+    patchJump(endJump);
+}
+
+void Compiler::or_(bool canAssign)
+{
+    int elseJump = emitJump(OP_JUMP_IF_FALSE);
+    int endJump = emitJump(OP_JUMP);
+
+    patchJump(elseJump);
+    emitByte(OP_POP);
+
+    parser.parsePrecedence(P_OR, this);
+    patchJump(endJump);
+}
 
 void Compiler::expression()
 {
@@ -467,6 +603,44 @@ void Compiler::expressionStatement()
 {
     expression();
     parser.consume(T_SEMICOLON, "Expect ';' after expression.");
+    emitByte(OP_POP);
+}
+
+void Compiler::ifStatement()
+{
+    parser.consume(T_LPAREN, "Expect '(' after 'if'");
+    expression();
+    parser.consume(T_RPAREN, "Expect ')' after condition");
+
+    // tells how much to offset the VM stack by if the condition is false
+    int thenJump = emitJump(OP_JUMP_IF_FALSE);
+    emitByte(OP_POP);
+    statement();
+
+    int elseJump = emitJump(OP_JUMP);
+
+    // back patch
+    patchJump(thenJump);
+    emitByte(OP_POP);
+
+    // check for else statement
+    if (parser.match(T_ELSE)) statement();
+    patchJump(elseJump);
+}
+
+void Compiler::whileStatement()
+{
+    int loopStart = currentChunk()->bytes.size();
+    parser.consume(T_LPAREN, "Expect '(' after 'while'.");
+    expression();
+    parser.consume(T_RPAREN, "Expect ')' after condition.");
+
+    int exitJump = emitJump(OP_JUMP_IF_FALSE);
+    emitByte(OP_POP);
+    statement();
+    emitLoop(loopStart);
+
+    patchJump(exitJump);
     emitByte(OP_POP);
 }
 
@@ -521,13 +695,23 @@ void Compiler::declaration()
         synchronize();
 }
 
-
 void Compiler::statement()
 {
     if (parser.match(T_PRINT))
     {
         printStatement();
     }
+
+    else if (parser.match(T_IF))
+    {
+        ifStatement();
+    }
+
+    else if (parser.match(T_WHILE))
+    {
+        whileStatement();
+    }
+
     else if (parser.match(T_LBRACE))
     {
         scopeDepth++;
@@ -535,7 +719,7 @@ void Compiler::statement()
         scopeDepth--;
 
         // remove locals declared in scope
-        while (localCount > 0 && locals[localCount -1].depth > scopeDepth)
+        while (localCount > 0 && locals[localCount - 1].depth > scopeDepth)
         {
             emitByte(OP_POP);
             localCount--;

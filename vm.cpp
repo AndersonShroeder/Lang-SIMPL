@@ -51,6 +51,7 @@ InterpretResult VM::run()
 {
 #define READ_BYTE() ((this->ip)++)
 #define READ_CONSTANT() (this->bytearray->constants.values[*READ_BYTE()])
+#define READ_SHORT() (this->ip += 2, (uint16_t)((this->ip[-2] << 8 | this->ip[-1])))
 #define READ_STRING() AS_STRING(READ_CONSTANT())
 #define BINARY_OP(valueType, op)                        \
     do                                                  \
@@ -235,11 +236,26 @@ InterpretResult VM::run()
             push(BOOL_VAL(valuesEqual(a, b)));
             break;
         }
+
+        case OP_JUMP_IF_FALSE:
+        {
+            uint16_t offset = READ_SHORT();
+            if (isFalsey(peek(0))) ip += offset;
+            break;
+        }
+
+        case OP_LOOP:
+        {
+            uint16_t offset = READ_SHORT();
+            ip -= offset;
+            break;
+        }
         }
     }
 
 #undef READ_BYTE
 #undef READ_CONSTANT
+#undef READ_SHORT
 #undef READ_STRING
 #undef BINARY_OP
 }
