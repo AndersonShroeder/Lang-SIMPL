@@ -1,0 +1,14 @@
+statement   ->  | expr
+                | For
+                | if
+                | print
+                | return
+                | while
+                | block ;
+
+block       ->  {declaration*} ;
+
+declaration ->  | class
+                | func
+                | variable
+                | statement ;

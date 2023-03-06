@@ -17,6 +17,8 @@ public:
 
     int simpleInstruction(const char *name, int offset);
 
+    int byteInstruction(const char* name, ByteArray* array, int offset);
+
     int disassembleInstruction(int offset);
 };
 

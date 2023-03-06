@@ -1,7 +1,7 @@
 #ifndef BYTE_CODES_H
 #define BYTE_CODES_H
 
-// Enum that contains operation instructions
+
 enum OpCode
 {
     OP_CONSTANT,
@@ -10,6 +10,8 @@ enum OpCode
     OP_FALSE,
     OP_POP,
     OP_DEFINE_GLOBAL,
+    OP_GET_LOCAL,
+    OP_SET_LOCAL,
     OP_GET_GLOBAL,
     OP_SET_GLOBAL,
     OP_EQUAL,

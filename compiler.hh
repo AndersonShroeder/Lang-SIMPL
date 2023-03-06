@@ -9,7 +9,13 @@ class Compiler;
 
 typedef void (Compiler::*ParseFn)(bool canAssign);
 
-// Numerically larger precedence in enum are of higher prio
+/**
+
+    @brief This class/enum represents a parsing rule for a specific operator or token in a SIMPL's grammar. The ParseRule object
+    contains a prefix and infix ParseFn for handling how the token is parsed in different contexts, as well as a Precedence
+    enum value representing the operator's precedence relative to other operators in the grammar.
+*/
+
 enum Precedence
 {
     P_NONE,
@@ -42,6 +48,14 @@ public:
     };
 };
 
+/**
+
+    @brief This class encapsulates utility necessary for SIMPL's recursive descent parser. The Parser object contains a Lexer
+    object to read in tokens from source code, an array of ParseRule objects that describe how to parse different operators
+    and tokens in the grammar, and several functions for parsing different types of statements and expressions. Despite the name, the
+    compiler is generally responsible for performing the actually recursive descent.
+*/
+
 class Parser
 {
 public:
@@ -49,6 +63,8 @@ public:
     Token previous;
     Lexer lexer;
     ParseRule rules[49];
+    bool hadError;
+    bool panicMode;
 
     Parser() {}
 
@@ -59,14 +75,7 @@ public:
     }
 
     void generateRules();
-    
-    // hadError and panicMode get reset after every statement.
-    bool hadError;
 
-    // allows us to know if we need to resynch code after an error is spotted
-    bool panicMode;
-
-    // Prints where error occured
     void errorAt(Token token, const char *message);
 
     void error(const char *message);
@@ -84,6 +93,13 @@ public:
     void parsePrecedence(Precedence precedence, Compiler *compiler);
 };
 
+// Represents a local variable with name "name" and scope of depth "depth"
+struct Local
+{
+    int depth;
+    Token name;
+};
+
 
 class Compiler
 {
@@ -91,6 +107,11 @@ public:
 
     Parser parser;
     ByteArray *compilingChunk;
+
+    // keeps track of information for local/scoped variables during compilation
+    Local locals[UINT8_COUNT];
+    int localCount = 0;
+    int scopeDepth = 0;
 
     Compiler(){}
 
@@ -123,6 +144,8 @@ public:
 
     void string(bool canAssign);
 
+    int resolveLocal(Token& name);
+
     void namedVariable(Token name, bool canAssign);
 
     void variable(bool canAssign);
@@ -131,6 +154,8 @@ public:
 
     uint8_t identifierConstant(Token name);
 
+    void declareVariable();
+
     uint8_t parseVariable(const char *errorMessage);
 
     void defineVariable(uint8_t global);
@@ -138,6 +163,8 @@ public:
     ParseRule *getRule(TokenType type);
 
     void expression();
+
+    void block();
 
     void varDeclaration();
 

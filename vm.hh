@@ -23,6 +23,16 @@ class Hashing
     size_t operator()(const std::shared_ptr<ObjString> obj) const;
 };
 
+class Equality
+{
+    public:
+
+    bool operator()(const std::shared_ptr<ObjString> obj1, const std::shared_ptr<ObjString> obj2) const
+    {
+        return obj1->str == obj2->str;
+    }
+};
+
 class VM
 {
 public:
@@ -31,8 +41,8 @@ public:
     std::vector<uint8_t>::iterator ip; // Instruction pointer which points to the current chunk being run
     Value stack[STACK_MAX];
     Value *stackTop;
-    Table<std::shared_ptr<ObjString>, Value, Hashing> strings;
-    Table<std::shared_ptr<ObjString>, Value, Hashing> globals;
+    Table<std::shared_ptr<ObjString>, Value, Hashing, Equality> strings;
+    Table<std::shared_ptr<ObjString>, Value, Hashing, Equality> globals;
     Obj* objects;
 
     VM();

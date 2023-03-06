@@ -4,6 +4,11 @@
 #include "common.hh"
 #include "values.hh"
 
+/**
+
+    @brief This class represents an array of bytes along with associated line numbers and constant values.
+    The ByteArray class provides functionality to write bytes to the array, add constant values and retrieve their index.
+    */
 class ByteArray
 {
     public:
@@ -15,7 +20,6 @@ class ByteArray
 
     void writeByte(uint8_t byte, int line);
 
-    // Returns index where constant is located
     int addConstant(Value value);
 };
 

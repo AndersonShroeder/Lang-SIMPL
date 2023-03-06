@@ -302,17 +302,47 @@ void Compiler::string(bool canAssign)
     emitConstant(OBJ_VAL(makeString(parser.previous.start + 1, parser.previous.length - 2)));
 }
 
+int Compiler::resolveLocal(Token& name)
+{
+    for (int i = localCount - 1; i >= 0; i--)
+    {
+        Local* local = &locals[i];
+        if (strcmp(name.start, local->name.start))
+        {
+            if (local->depth == -1)
+            {
+                parser.error("Can't read local variable in its own initializer.");
+            }
+            return i;
+        }
+    }
+
+    return -1;
+}
+
 void Compiler::namedVariable(Token name, bool canAssign)
 {
-    uint8_t arg = identifierConstant(name);
+    uint8_t getOp, setOp;
+    int arg = resolveLocal(name);
+    if (arg != -1)
+    {
+        getOp = OP_GET_LOCAL;
+        setOp = OP_SET_LOCAL;
+    }
+    else
+    {
+        getOp = OP_GET_GLOBAL;
+        setOp = OP_SET_GLOBAL;
+    }
+
 
     if (canAssign && parser.match(T_EQ))
     {
         expression();
-        emitBytes(OP_SET_GLOBAL, arg);
+        emitBytes(setOp, arg);
     }
     else
-        emitBytes(OP_GET_GLOBAL, arg);
+        emitBytes(getOp, arg);
 }
 
 void Compiler::variable(bool canAssign)
@@ -348,14 +378,56 @@ uint8_t Compiler::identifierConstant(Token name)
     return makeConstant(OBJ_VAL(makeString(name.start, name.length)));
 }
 
+void Compiler::declareVariable()
+{
+    // because globals are late bound simply return if not in scope
+    if (scopeDepth == 0) return;
+
+    Token& name = parser.previous;
+
+    for (int i = localCount - 1; i >= 0; i--)
+    {
+        Local* local = &locals[i];
+        if (local->depth != -1 && local->depth < scopeDepth)
+        {
+            break;
+        }
+
+        if (strcmp(name.start, local->name.start) == 0)
+        {
+            parser.error("Already a variable with this name in this scope.");
+        }
+    }
+
+    if (localCount == UINT8_COUNT)
+    {
+        parser.error("Too many local variables in function.");
+        return;
+    }
+
+    Local* local = &locals[localCount++];
+    local->depth = -1;
+    local->name = name;
+}
+
 uint8_t Compiler::parseVariable(const char *errorMessage)
 {
     parser.consume(T_ID, errorMessage);
+
+    declareVariable();
+    if (scopeDepth > 0) return 0;
+
     return identifierConstant(parser.previous);
 }
 
 void Compiler::defineVariable(uint8_t global)
 {
+    if (scopeDepth > 0)
+    {
+        locals[localCount - 1].depth = scopeDepth;
+        return;
+    }
+
     emitBytes(OP_DEFINE_GLOBAL, global);
 }
 
@@ -363,6 +435,17 @@ void Compiler::defineVariable(uint8_t global)
 void Compiler::expression()
 {
     parser.parsePrecedence(P_ASSIGNMENT, this);
+}
+
+// creates a block as long as we havent reached the end of block/file
+void Compiler::block()
+{
+    while (!parser.check(T_RBRACE) && !parser.check(T_EOF))
+    {
+        declaration();
+    }
+
+    parser.consume(T_RBRACE, "Expected '}' after block.");
 }
 
 void Compiler::varDeclaration()
@@ -438,11 +521,25 @@ void Compiler::declaration()
         synchronize();
 }
 
+
 void Compiler::statement()
 {
     if (parser.match(T_PRINT))
     {
         printStatement();
+    }
+    else if (parser.match(T_LBRACE))
+    {
+        scopeDepth++;
+        block();
+        scopeDepth--;
+
+        // remove locals declared in scope
+        while (localCount > 0 && locals[localCount -1].depth > scopeDepth)
+        {
+            emitByte(OP_POP);
+            localCount--;
+        }
     }
     else
     {

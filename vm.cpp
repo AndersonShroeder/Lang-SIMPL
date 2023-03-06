@@ -173,6 +173,20 @@ InterpretResult VM::run()
             pop();
             break;
 
+        case OP_GET_LOCAL:
+        {
+            uint8_t slot = *READ_BYTE();
+            push(stack[slot]);
+            break;
+        }
+
+        case OP_SET_LOCAL:
+        {
+            uint8_t slot = *READ_BYTE();
+            stack[slot] = peek(0);
+            break;
+        }
+
         case OP_DEFINE_GLOBAL:
         {
             std::shared_ptr<ObjString> name = READ_STRING();
@@ -183,13 +197,7 @@ InterpretResult VM::run()
 
         case OP_GET_GLOBAL:
         {
-            for (auto const &pair: globals.table)
-            {
-                std::cout << pair.first->str << ": " << pair.second.type << '\n';
-            }
-
             std::shared_ptr<ObjString> name = READ_STRING();
-            std::cout << globals.table.at(name).type << '\n';
             Value value;
             if (!(globals.tableGet(name, value)))
             {

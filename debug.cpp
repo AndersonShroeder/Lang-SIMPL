@@ -34,6 +34,13 @@ int Disassembler::simpleInstruction(const char *name, int offset)
     return offset + 1;
 }
 
+int Disassembler::byteInstruction(const char* name, ByteArray* array, int offset)
+{
+    uint8_t slot = bytearray->bytes[offset + 1];
+    printf("%-16s %4d\n", name, slot);
+    return offset + 2;
+}
+
 int Disassembler::disassembleInstruction(int offset)
 {
     printf("%04d ", offset);
@@ -59,6 +66,10 @@ int Disassembler::disassembleInstruction(int offset)
         return simpleInstruction("OP_TRUE", offset);
     case OP_POP:
         return simpleInstruction("OP_POP", offset);
+    case OP_GET_LOCAL:
+        return byteInstruction("OP_GET_LOCAL", bytearray, offset);
+    case OP_SET_LOCAL:
+        return byteInstruction("OP_SET_LOCAL", bytearray, offset);
     case OP_DEFINE_GLOBAL:
         return constantInstruction("OP_DEFINE_GLOBAL", offset);
     case OP_GET_GLOBAL:
