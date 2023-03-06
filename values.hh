@@ -4,7 +4,6 @@
 #include "common.hh"
 
 class Obj;
-class ObjString;
 
 enum ValueType
 {

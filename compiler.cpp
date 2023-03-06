@@ -426,7 +426,7 @@ void Compiler::declaration()
 {
     if (parser.match(T_VAR))
     {
-        // varDeclaration();
+        varDeclaration();
     }
     else
     {

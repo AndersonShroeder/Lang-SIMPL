@@ -1,10 +1,9 @@
 #include <stdarg.h>
 #include <string.h>
-#include "common.hh"
 #include "vm.hh"
 #include "debug.hh"
-#include "object.hh"
 #include "bytecodes.hh"
+#include "table.cpp"
 
 
 /* 
@@ -15,6 +14,11 @@ Adding a sequence of instructions gives the total effect on the stack:
 - Expression: one because every expression results in only one value on the stack
 - Statement: zero because a statement does not push any values onto the stack after execution
 */
+
+size_t Hashing::operator()(const std::shared_ptr<ObjString> obj) const
+{
+        return std::hash<std::string>{}(obj->str);
+}
 
 VM::VM()
 {
@@ -169,38 +173,44 @@ InterpretResult VM::run()
             pop();
             break;
 
-        // case OP_DEFINE_GLOBAL:
-        // {
-        //     ObjString* name = READ_STRING();
-        //     globals.tableSet(name, peek(0));
-        //     pop();
-        //     break;
-        // }
+        case OP_DEFINE_GLOBAL:
+        {
+            std::shared_ptr<ObjString> name = READ_STRING();
+            globals.tableSet(name, peek(0));
+            pop();
+            break;
+        }
 
-        // case OP_GET_GLOBAL:
-        // {
-        //     ObjString* name = READ_STRING();
-        //     Value value;
-        //     if (!(globals.tableGet(name, &value)))
-        //     {
-        //         runtimeError("Undefined variable '%s'.", name->chars);
-        //         return INTERPRET_RUNTIME_ERROR;
-        //     }
-        //     push(value);
-        //     break;
-        // }
+        case OP_GET_GLOBAL:
+        {
+            for (auto const &pair: globals.table)
+            {
+                std::cout << pair.first->str << ": " << pair.second.type << '\n';
+            }
 
-        // case OP_SET_GLOBAL:
-        // {
-        //     ObjString* name = READ_STRING();
-        //     if (globals.tableSet(name, peek(0)))
-        //     {
-        //         globals.tableDelete(name);
-        //         runtimeError("Undefined variable '%s'", name->chars);
-        //         return INTERPRET_RUNTIME_ERROR;
-        //     }
-        //     break;
-        // }
+            std::shared_ptr<ObjString> name = READ_STRING();
+            std::cout << globals.table.at(name).type << '\n';
+            Value value;
+            if (!(globals.tableGet(name, value)))
+            {
+                runtimeError("Undefined variable '%s'.", name->str);
+                return INTERPRET_RUNTIME_ERROR;
+            }
+            push(value);
+            break;
+        }
+
+        case OP_SET_GLOBAL:
+        {
+            std::shared_ptr<ObjString> name = READ_STRING();
+            if (globals.tableSet(name, peek(0)))
+            {
+                globals.tableDelete(name);
+                runtimeError("Undefined variable '%s'", name->str);
+                return INTERPRET_RUNTIME_ERROR;
+            }
+            break;
+        }
 
         case OP_GREATER:
             BINARY_OP(BOOL_VAL, >);

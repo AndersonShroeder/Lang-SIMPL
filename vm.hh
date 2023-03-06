@@ -16,6 +16,13 @@ enum InterpretResult
     INTERPRET_RUNTIME_ERROR
 };
 
+class Hashing
+{
+    public:
+
+    size_t operator()(const std::shared_ptr<ObjString> obj) const;
+};
+
 class VM
 {
 public:
@@ -24,8 +31,8 @@ public:
     std::vector<uint8_t>::iterator ip; // Instruction pointer which points to the current chunk being run
     Value stack[STACK_MAX];
     Value *stackTop;
-    // Table<ObjString, Value> strings;
-    // Table<ObjString, Value> globals;
+    Table<std::shared_ptr<ObjString>, Value, Hashing> strings;
+    Table<std::shared_ptr<ObjString>, Value, Hashing> globals;
     Obj* objects;
 
     VM();
