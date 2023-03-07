@@ -271,7 +271,8 @@ void Compiler::emitLoop(int loopStart)
     emitByte(OP_LOOP);
 
     int offset = currentChunk()->bytes.size() - loopStart + 2;
-    if (offset > UINT16_MAX) parser.error("Loop body too large.");
+    if (offset > UINT16_MAX)
+        parser.error("Loop body too large.");
 
     emitByte((offset >> 8) & 0xff);
     emitByte(offset & 0xff);
@@ -282,7 +283,7 @@ int Compiler::emitJump(uint8_t instruction)
     emitByte(instruction);
     emitByte(0xff);
     emitByte(0xff);
-    return currentChunk()->bytes.size() -2;
+    return currentChunk()->bytes.size() - 2;
 }
 
 void Compiler::emitReturn()
@@ -317,7 +318,7 @@ void Compiler::patchJump(int offset)
     }
 
     currentChunk()->bytes[offset] = (jump >> 8) & 0xff;
-    currentChunk()->bytes[offset+1] = jump & 0xff;
+    currentChunk()->bytes[offset + 1] = jump & 0xff;
 }
 
 void Compiler::endCompiler()
@@ -450,10 +451,10 @@ void Compiler::namedVariable(Token name, bool canAssign)
     if (canAssign && parser.match(T_EQ))
     {
         expression();
-        emitBytes(setOp, arg);
+        emitBytes(setOp, (uint8_t)arg);
     }
     else
-        emitBytes(getOp, arg);
+        emitBytes(getOp, (uint8_t)arg);
 }
 
 void Compiler::variable(bool canAssign)
@@ -544,7 +545,7 @@ void Compiler::defineVariable(uint8_t global)
     emitBytes(OP_DEFINE_GLOBAL, global);
 }
 
-// when this is called for expr A and B, A is on top of the stack, so if A is false we skip the rest of 
+// when this is called for expr A and B, A is on top of the stack, so if A is false we skip the rest of
 // B and just return A, else B also gets evaluated.
 void Compiler::and_(bool canAssign)
 {
@@ -566,6 +567,18 @@ void Compiler::or_(bool canAssign)
 
     parser.parsePrecedence(P_OR, this);
     patchJump(endJump);
+}
+
+void Compiler::exitScope()
+{
+    scopeDepth--;
+
+    // remove locals declared in scope
+    while (localCount > 0 && locals[localCount - 1].depth > scopeDepth)
+    {
+        emitByte(OP_POP);
+        localCount--;
+    }
 }
 
 void Compiler::expression()
@@ -606,6 +619,63 @@ void Compiler::expressionStatement()
     emitByte(OP_POP);
 }
 
+void Compiler::forStatement()
+{
+    scopeDepth++;
+
+    parser.consume(T_LPAREN, "Expected '(' after 'for'.");
+
+    // Initializer clause
+    if (parser.match(T_SEMICOLON))
+    {
+        // Nothing
+    }
+    else if (parser.match(T_VAR))
+    {
+        varDeclaration();
+    }
+    else
+    {
+        expressionStatement();
+    }
+
+    // condition clause
+    int loopStart = currentChunk()->bytes.size();
+    int exitJump = -1;
+    if (!parser.match(T_SEMICOLON))
+    {
+        expression();
+        parser.consume(T_SEMICOLON, "Expect ';'.");
+
+        exitJump = emitJump(OP_JUMP_IF_FALSE);
+        emitByte(OP_POP);
+    }
+
+    if (!parser.match(T_RPAREN))
+    {
+        int bodyJump = emitJump(OP_JUMP);
+        int incrementStart = currentChunk()->bytes.size();
+        expression();
+        emitByte(OP_POP);
+        parser.consume(T_RPAREN, "Expect ')' after for clauses.");
+
+        emitLoop(loopStart);
+        loopStart = incrementStart;
+        patchJump(bodyJump);
+    }
+
+    statement();
+    emitLoop(loopStart);
+
+    if (exitJump != -1)
+    {
+        patchJump(exitJump);
+        emitByte(OP_POP);
+    }
+
+    exitScope();
+}
+
 void Compiler::ifStatement()
 {
     parser.consume(T_LPAREN, "Expect '(' after 'if'");
@@ -624,7 +694,8 @@ void Compiler::ifStatement()
     emitByte(OP_POP);
 
     // check for else statement
-    if (parser.match(T_ELSE)) statement();
+    if (parser.match(T_ELSE))
+        statement();
     patchJump(elseJump);
 }
 
@@ -702,6 +773,11 @@ void Compiler::statement()
         printStatement();
     }
 
+    else if (parser.match(T_FOR))
+    {
+        forStatement();
+    }
+
     else if (parser.match(T_IF))
     {
         ifStatement();
@@ -716,14 +792,7 @@ void Compiler::statement()
     {
         scopeDepth++;
         block();
-        scopeDepth--;
-
-        // remove locals declared in scope
-        while (localCount > 0 && locals[localCount - 1].depth > scopeDepth)
-        {
-            emitByte(OP_POP);
-            localCount--;
-        }
+        exitScope();
     }
     else
     {

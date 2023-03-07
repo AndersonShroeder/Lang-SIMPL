@@ -262,6 +262,7 @@ InterpretResult VM::run()
 
 InterpretResult VM::interpret(const char *source)
 {
+
     // Chunk to be filled from user input
     ByteArray fill;
     compiler = Compiler(source);

@@ -182,6 +182,8 @@ public:
 
     ParseRule *getRule(TokenType type);
 
+    void exitScope();
+
     void expression();
 
     void block();
@@ -195,6 +197,8 @@ public:
     void printStatement();
 
     void whileStatement();
+
+    void forStatement();
 
     void synchronize();
 

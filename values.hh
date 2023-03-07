@@ -45,7 +45,10 @@ class ValueArray
 public:
     std::vector<Value> values;
 
-    ValueArray();
+    ValueArray()
+    {
+
+    }
 
     void writeValue(Value value);
 

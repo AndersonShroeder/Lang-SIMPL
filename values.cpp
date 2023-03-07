@@ -2,10 +2,6 @@
 #include "values.hh"
 #include "object.hh"
 
-ValueArray::ValueArray()
-{
-}
-
 void ValueArray::writeValue(Value value)
 {
     values.push_back(value);

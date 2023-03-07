@@ -21,6 +21,7 @@ void Disassembler::disassembleByteArray()
 
 int Disassembler::constantInstruction(const char *name, int offset)
 {
+    std::cout << bytearray->constants.values.size() << '\n';
     uint8_t constant = bytearray->bytes[offset + 1];
     printf("%-16s %4d '", name, constant);
     printValue(bytearray->constants.values[constant]);
