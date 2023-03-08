@@ -116,7 +116,7 @@ class Compiler
 public:
 
     Parser parser;
-    ByteArray *compilingChunk;
+    std::shared_ptr<ByteArray> compilingChunk;
 
     // keeps track of information for local/scoped variables during compilation
     Local locals[UINT8_COUNT];
@@ -130,7 +130,7 @@ public:
         parser = Parser(source);
     }
 
-    ByteArray *currentChunk();
+    std::shared_ptr<ByteArray> currentChunk();
 
     void emitByte(uint8_t byte);
 
@@ -206,7 +206,7 @@ public:
 
     void statement();
 
-    bool compile(ByteArray *bytearray);
+    bool compile(std::shared_ptr<ByteArray> bytearray);
 };
 
 #endif

@@ -264,17 +264,17 @@ InterpretResult VM::interpret(const char *source)
 {
 
     // Chunk to be filled from user input
-    ByteArray fill;
+    std::shared_ptr<ByteArray> fill = std::make_shared<ByteArray>();
     compiler = Compiler(source);
 
     // If compilation fails, return result
-    if (!compiler.compile(&fill))
+    if (!compiler.compile(fill))
     {
         return INTERPRET_COMPILE_ERROR;
     }
 
     // otherwise the chunk is run on the virtual machine
-    this->bytearray = &fill;
+    this->bytearray = fill;
     this->ip = this->bytearray->bytes.begin();
     InterpretResult result = run();
 

@@ -2,7 +2,7 @@
 #include "values.hh"
 #include "bytecodes.hh"
 
-Disassembler::Disassembler(ByteArray *array, const char *name)
+Disassembler::Disassembler(std::shared_ptr<ByteArray> array, const char *name)
 {
     bytearray = array;
     this->name = name;
@@ -21,10 +21,9 @@ void Disassembler::disassembleByteArray()
 
 int Disassembler::constantInstruction(const char *name, int offset)
 {
-    std::cout << bytearray->constants.values.size() << '\n';
-    uint8_t constant = bytearray->bytes[offset + 1];
+    uint8_t constant = bytearray->bytes.at(offset + 1);
     printf("%-16s %4d '", name, constant);
-    printValue(bytearray->constants.values[constant]);
+    printValue(bytearray->constants.values.at(constant));
     printf("'\n");
     return offset + 2;
 }
@@ -37,15 +36,15 @@ int Disassembler::simpleInstruction(const char *name, int offset)
 
 int Disassembler::byteInstruction(const char *name, int offset)
 {
-    uint8_t slot = bytearray->bytes[offset + 1];
+    uint8_t slot = bytearray->bytes.at(offset + 1);
     printf("%-16s %4d\n", name, slot);
     return offset + 2;
 }
 
 int Disassembler::jumpInstruction(const char *name, int sign, int offset)
 {
-    uint16_t jump = (uint16_t)(bytearray->bytes[offset + 1] << 8);
-    jump |= bytearray->bytes[offset + 2];
+    uint16_t jump = (uint16_t)(bytearray->bytes.at(offset + 1) << 8);
+    jump |= bytearray->bytes.at(offset + 2);
     printf("%-16s %4d -> %d\n", name, offset, offset + 3 + sign * jump);
     return offset + 3;
 }
@@ -53,16 +52,16 @@ int Disassembler::jumpInstruction(const char *name, int sign, int offset)
 int Disassembler::disassembleInstruction(int offset)
 {
     printf("%04d ", offset);
-    if (offset > 0 && bytearray->lines[offset] == bytearray->lines[offset - 1])
+    if (offset > 0 && bytearray->lines.at(offset) == bytearray->lines.at(offset - 1))
     {
         printf("    | ");
     }
     else
     {
-        printf("%4d ", bytearray->lines[offset]);
+        printf("%4d ", bytearray->lines.at(offset));
     }
 
-    uint8_t instruction = bytearray->bytes[offset];
+    uint8_t instruction = bytearray->bytes.at(offset);
     switch (instruction)
     {
     case OP_CONSTANT:

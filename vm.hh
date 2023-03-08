@@ -37,7 +37,7 @@ class VM
 {
 public:
     Compiler compiler;
-    ByteArray *bytearray;
+    std::shared_ptr<ByteArray> bytearray = std::make_shared<ByteArray>();
     std::vector<uint8_t>::iterator ip; // Instruction pointer which points to the current chunk being run
     Value stack[STACK_MAX];
     Value *stackTop;

@@ -8,7 +8,7 @@
 #include "debug.hh"
 #endif
 
-ByteArray *Compiler::currentChunk()
+std::shared_ptr<ByteArray> Compiler::currentChunk()
 {
     return compilingChunk;
 }
@@ -415,12 +415,17 @@ void Compiler::string(bool canAssign)
     emitConstant(OBJ_VAL(makeString(parser.previous.start + 1, parser.previous.length - 2)));
 }
 
+static bool identifiersEqual(Token* a, Token* b) {
+  if (a->length != b->length) return false;
+  return memcmp(a->start, b->start, a->length) == 0;
+}
+
 int Compiler::resolveLocal(Token &name)
 {
     for (int i = localCount - 1; i >= 0; i--)
     {
-        Local *local = &locals[i];
-        if (strcmp(name.start, local->name.start))
+        Local* local = &locals[i];
+        if (identifiersEqual(&local->name, &name))
         {
             if (local->depth == -1)
             {
@@ -444,6 +449,7 @@ void Compiler::namedVariable(Token name, bool canAssign)
     }
     else
     {
+        arg = identifierConstant(name);
         getOp = OP_GET_GLOBAL;
         setOp = OP_SET_GLOBAL;
     }
@@ -506,7 +512,7 @@ void Compiler::declareVariable()
             break;
         }
 
-        if (strcmp(name.start, local->name.start) == 0)
+        if (std::string(name.start) == std::string(local->name.start))
         {
             parser.error("Already a variable with this name in this scope.");
         }
@@ -800,7 +806,7 @@ void Compiler::statement()
     }
 }
 
-bool Compiler::compile(ByteArray *bytearray)
+bool Compiler::compile(std::shared_ptr<ByteArray> bytearray)
 {
 
     compilingChunk = bytearray;

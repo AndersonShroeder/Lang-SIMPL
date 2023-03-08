@@ -19,7 +19,6 @@ struct Value
     ValueType type;
 
     std::variant<bool, double, std::shared_ptr<Obj>> val;
-
 };
 
 // Check if a Value type has a specific C type

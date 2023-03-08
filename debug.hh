@@ -15,10 +15,10 @@
 class Disassembler
 {
 public:
-    ByteArray *bytearray;
+    std::shared_ptr<ByteArray> bytearray;
     const char *name;
 
-    Disassembler(ByteArray* array, const char* name);
+    Disassembler(std::shared_ptr<ByteArray> array, const char* name);
 
     void disassembleByteArray();
 
