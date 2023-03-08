@@ -1,0 +1,1 @@
+C:\Users\Anderson\Documents\GitHub\Lang-SIMPL\simpl\target\debug\simpl.exe: C:\Users\Anderson\Documents\GitHub\Lang-SIMPL\simpl\src\bytearray.rs C:\Users\Anderson\Documents\GitHub\Lang-SIMPL\simpl\src\main.rs
